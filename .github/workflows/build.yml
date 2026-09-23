@@ -63,7 +63,7 @@ jobs:
           done
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase
           git add deploy
-          git commit -m "chore: bump image to ${GITHUB_SHA::7}" || echo "no changes"
+          git commit -m "chore: bump image to ${GITHUB_SHA::7}" || echo "no changes to commit"
+          git pull --rebase --autostash
           git push
