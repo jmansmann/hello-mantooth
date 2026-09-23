@@ -38,6 +38,20 @@ The image is **multi-arch** (`linux/amd64`, `linux/arm64`) — see ADR-004.
 docker buildx build --platform linux/amd64,linux/arm64 -t hello-mantooth .
 ```
 
+## Deploy to the local k3d cluster
+
+One-shot local loop — builds the image, imports it into k3d, applies the
+manifests, and waits for rollout. No registry or CI needed:
+
+```bash
+make dev          # build → k3d image import → kubectl apply → rollout
+make port-forward # http://localhost:8090
+make undeploy     # tear down the namespace
+```
+
+`make dev` is a local escape hatch. `make deploy` is the GitOps path
+(`argocd app sync`) and needs the manifests pushed and the image in GHCR.
+
 ## Deployment
 
 Deployment manifests live in this repo (ADR-002) and are consumed by the

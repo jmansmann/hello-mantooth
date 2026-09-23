@@ -11,6 +11,8 @@ First application repo for the homelab. Source **and** deployment manifests both
 | `make verify` | format check + vet + test — **the same gate CI runs** |
 | `make build` | compile the server binary into `bin/` |
 | `make image` | local single-arch dev image |
+| `make dev` | one-shot local loop: build → load into k3d → apply → wait |
+| `make undeploy` | delete the app namespace |
 | `make manifests ENV=k3d` | render manifests for an environment |
 | `make deploy` | sync through Argo CD (GitOps) |
 | `make port-forward` | forward the service to `localhost:8090` |
