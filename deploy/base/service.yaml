@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-mantooth
+  labels:
+    app.kubernetes.io/name: hello-mantooth
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: mantooth-homelab
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: hello-mantooth
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
