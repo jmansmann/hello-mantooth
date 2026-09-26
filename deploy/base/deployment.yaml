@@ -17,8 +17,6 @@ spec:
         app.kubernetes.io/name: hello-mantooth
         app.kubernetes.io/component: web
     spec:
-      imagePullSecrets:
-        - name: ghcr-pull
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
