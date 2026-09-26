@@ -3,6 +3,10 @@ kind: Kustomization
 
 # Bare-metal cluster (amd64). Runs two replicas.
 resources:
-  - ../../base
+- ../../base
 patches:
-  - path: replicas-patch.yaml
+- path: replicas-patch.yaml
+images:
+- name: ghcr.io/jmansmann/hello-mantooth
+  newName: ghcr.io/jmansmann/hello-mantooth
+  newTag: sha-5289d1b40c5fba7204c3b7c0cb6ce7b463198510
