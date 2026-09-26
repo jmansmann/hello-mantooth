@@ -79,7 +79,7 @@ jobs:
 
       - name: Bump image tag in manifests
         run: |
-          IMAGE_REF="${IMAGE}:sha-${{ steps.meta.outputs.version }}"
+          IMAGE_REF="${IMAGE}:${{ steps.meta.outputs.version }}"
           for env in k3d homelab; do
             (cd "deploy/overlays/$env" && kustomize edit set image "${{ env.IMAGE }}=${IMAGE_REF}")
           done
