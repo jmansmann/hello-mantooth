@@ -2,16 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-<<<<<<< Updated upstream
-- ../../base
-images:
-- name: ghcr.io/jmansmann/hello-mantooth
-  newName: ghcr.io/jmansmann/hello-mantooth
-  newTag: sha-5289d1b40c5fba7204c3b7c0cb6ce7b463198510
-=======
   - ../../base
+
+images:
+  - name: ghcr.io/jmansmann/hello-mantooth
+    newName: ghcr.io/jmansmann/hello-mantooth
+    newTag: sha-b523683a04d36fe6a2fdda708369d3de98ed0b0f
 
 replicas:
   - name: hello-mantooth
     count: 3
->>>>>>> Stashed changes
