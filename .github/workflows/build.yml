@@ -3,6 +3,10 @@ name: build
 on:
   push:
     branches: [main]
+    # The image-tag bump commit only touches deploy/, so ignoring that path
+    # stops the bot's own push from re-triggering a build (identity-agnostic).
+    paths-ignore:
+      - 'deploy/**'
   workflow_dispatch:
 
 permissions:
@@ -18,8 +22,6 @@ env:
 
 jobs:
   build:
-    # Skip the tag-bump commit this job itself pushes, otherwise it re-triggers.
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,9 +63,14 @@ jobs:
           for env in k3d homelab; do
             (cd "deploy/overlays/$env" && kustomize edit set image "ghcr.io/${{ github.repository }}=${IMAGE}")
           done
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git pull --rebase
           git add deploy
-          git commit -m "chore: bump image to ${GITHUB_SHA::7}" || echo "no changes"
-          git push
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "[skip ci] chore: bump image to ${GITHUB_SHA::7}" || echo "no changes"
+            git push
+          else
+            echo "No changes detected, skipping push."
+          fi
+
