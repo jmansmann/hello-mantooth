@@ -38,19 +38,47 @@ The image is **multi-arch** (`linux/amd64`, `linux/arm64`) — see ADR-004.
 docker buildx build --platform linux/amd64,linux/arm64 -t hello-mantooth .
 ```
 
-## Deploy to the local k3d cluster
+## Fast local loop in k3d
 
-One-shot local loop — builds the image, imports it into k3d, applies the
-manifests, and waits for rollout. No registry or CI needed:
+One-shot local loop — builds the image from the working tree, imports it into
+k3d, applies the Kustomize overlay, and waits for rollout. No registry or CI
+needed. It deploys into an isolated `hello-mantooth-dev` namespace, so Argo CD
+can keep managing the remote-Git version in the `hello-mantooth` namespace
+without fighting local changes:
 
 ```bash
 make dev          # build → k3d image import → kubectl apply → rollout
-make port-forward # http://localhost:8090
-make undeploy     # tear down the namespace
+make port-forward # local dev copy at http://localhost:8090
+make undeploy     # delete only hello-mantooth-dev
 ```
 
-`make dev` is a local escape hatch. `make deploy` is the GitOps path
-(`argocd app sync`) and needs the manifests pushed and the image in GHCR.
+`make deploy` syncs the Argo-managed copy from remote Git. To access that copy,
+run `make argocd-port-forward`. Argo cannot see uncommitted local files; changes
+to the GitOps version must be pushed and merged to `main`.
+
+### Observe Service DNS and EndpointSlices
+
+`make dev` uses the `hello-mantooth-dev` namespace. The short Service DNS name
+inside that namespace is `hello-mantooth`; its full name is
+`hello-mantooth.hello-mantooth-dev.svc.cluster.local`.
+
+In one terminal, watch the ready backend endpoints:
+
+```bash
+kubectl -n hello-mantooth-dev get endpointslices \
+  -l kubernetes.io/service-name=hello-mantooth -o wide -w
+```
+
+From another terminal, resolve and call the Service from inside the cluster:
+
+```bash
+kubectl run dns-check -n hello-mantooth-dev --rm -it --restart=Never \
+  --image=busybox:1.36.1 -- sh -c \
+  'nslookup hello-mantooth.hello-mantooth-dev.svc.cluster.local; for i in 1 2 3 4 5 6; do wget -qO- http://hello-mantooth.hello-mantooth-dev.svc.cluster.local/; done'
+```
+
+The JSON response includes the pod hostname, so repeated connections can show
+which replica served each request. A small sample may not hit every replica.
 
 ## Deployment
 
@@ -69,20 +97,11 @@ Argo CD syncs `deploy/overlays/k3d` into the `hello-mantooth` namespace. CI
 builds on every push to `main`, pushes to GHCR, and bumps the image tag in
 `deploy/overlays/{k3d,homelab}`.
 
-### Image pull secret (private GHCR package)
+### GHCR visibility
 
-The package is private by default, so the Deployment references a `ghcr-pull`
-secret. Create it once per namespace (never commit it):
-
-```bash
-kubectl -n hello-mantooth create secret docker-registry ghcr-pull \
-  --docker-server=ghcr.io \
-  --docker-username=jmansmann \
-  --docker-password=<PAT with read:packages>
-```
-
-Alternatively, make the GHCR package public and remove the `imagePullSecrets`
-entry from `deploy/base/deployment.yaml`.
+The GHCR package is public (verified with an anonymous pull), so the Deployment
+does not need an image-pull secret. Both Git repositories are currently public
+as well, so Argo CD can fetch their sources without credentials.
 
 ## Verify
 
